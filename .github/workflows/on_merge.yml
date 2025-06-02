@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9, 3.10, 3.11]
+        python-version: ['3.9', '3.10', '3.11']
 
     steps:
       - name: Checkout Repo
@@ -45,8 +45,5 @@ jobs:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
         run: |
           python3 synthesize.py
-          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/${{ env.ENV_NAME }}/python-${{ matrix.python-version }}/output.mp3
-
-
-
+          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/$ENV_NAME/python-${{ matrix.python-version }}/output.mp3
 
