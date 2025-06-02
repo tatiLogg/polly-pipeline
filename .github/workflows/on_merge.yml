@@ -1,8 +1,9 @@
-name: Polly Production Deploy
-
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - beta
+      - 'feature/*'
 
 jobs:
   synthesize:
@@ -19,12 +20,25 @@ jobs:
       - name: Install boto3
         run: pip install boto3
 
-      - name: Run synthesize.py (Prod)
+      - name: Set ENV_NAME from branch
+        id: setenv
+        run: |
+          echo "Branch is: $GITHUB_REF_NAME"
+          if [[ \"$GITHUB_REF_NAME\" == \"main\" ]]; then
+            echo "ENV_NAME=production" >> $GITHUB_ENV
+          elif [[ \"$GITHUB_REF_NAME\" == \"beta\" ]]; then
+            echo "ENV_NAME=staging" >> $GITHUB_ENV
+          else
+            echo "ENV_NAME=development" >> $GITHUB_ENV
+          fi
+
+      - name: Run synthesize.py and upload
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
         run: |
           python3 synthesize.py
-          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/prod.mp3
+          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/$ENV_NAME/output.mp3
+
 
