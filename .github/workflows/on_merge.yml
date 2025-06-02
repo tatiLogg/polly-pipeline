@@ -1,13 +1,10 @@
-on:
-  push:
-    branches:
-      - main
-      - beta
-      - 'feature/*'
-
 jobs:
   synthesize:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -15,7 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install boto3
         run: pip install boto3
@@ -24,9 +21,9 @@ jobs:
         id: setenv
         run: |
           echo "Branch is: $GITHUB_REF_NAME"
-          if [[ \"$GITHUB_REF_NAME\" == \"main\" ]]; then
+          if [[ "$GITHUB_REF_NAME" == "main" ]]; then
             echo "ENV_NAME=production" >> $GITHUB_ENV
-          elif [[ \"$GITHUB_REF_NAME\" == \"beta\" ]]; then
+          elif [[ "$GITHUB_REF_NAME" == beta* ]]; then
             echo "ENV_NAME=staging" >> $GITHUB_ENV
           else
             echo "ENV_NAME=development" >> $GITHUB_ENV
@@ -39,6 +36,7 @@ jobs:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
         run: |
           python3 synthesize.py
-          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/$ENV_NAME/output.mp3
+          aws s3 cp output.mp3 s3://$S3_BUCKET/polly-audio/$ENV_NAME/python-${{ matrix.python-version }}/output.mp3
+
 
 
